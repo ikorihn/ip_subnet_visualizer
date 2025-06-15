@@ -3,6 +3,7 @@ import {
   calculateSubnet,
   calculateSubnetsFromRange,
   calculateUnusedRanges,
+  findSupernetOpportunities,
   ipToNumber,
   numberToIp,
   validateCIDR,
@@ -156,5 +157,192 @@ describe('IP Calculator', () => {
       expect(unusedRanges[1].startAddress).toBe('192.168.4.0');
       expect(unusedRanges[1].endAddress).toBe('192.168.4.255');
     });
+  });
+
+  describe('findSupernetOpportunities', () => {
+    it('should return empty array for no subnets', () => {
+      const suggestions = findSupernetOpportunities([]);
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should return empty array for single subnet', () => {
+      const subnet = calculateSubnet('192.168.1.0/24', '#FF0000');
+      const suggestions = findSupernetOpportunities([subnet]);
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should suggest supernet for two adjacent /25 subnets', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.128/25', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('192.168.1.0/24');
+      expect(suggestions[0].originalSubnets).toHaveLength(2);
+      expect(suggestions[0].efficiency).toBe(100); // 完全に効率的
+      expect(suggestions[0].savedAddresses).toBe(0); // ギャップなし
+    });
+
+    it('should suggest supernet for two adjacent /26 subnets', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/26', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.64/26', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('192.168.1.0/25');
+      expect(suggestions[0].originalSubnets).toHaveLength(2);
+      expect(suggestions[0].efficiency).toBe(100);
+    });
+
+    it('should not suggest supernet for non-adjacent subnets', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.2.0/25', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should not suggest supernet for different prefix lengths', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/24', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.2.0/25', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should suggest supernet for four consecutive /26 subnets', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/26', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.64/26', '#00FF00');
+      const subnet3 = calculateSubnet('192.168.1.128/26', '#0000FF');
+      const subnet4 = calculateSubnet('192.168.1.192/26', '#FFFF00');
+      const suggestions = findSupernetOpportunities([
+        subnet1,
+        subnet2,
+        subnet3,
+        subnet4,
+      ]);
+
+      // 2つずつのペアと4つ全体の提案があるはず
+      expect(suggestions.length).toBeGreaterThan(0);
+
+      // 4つ全体を集約した提案を見つける
+      const fullGroupSuggestion = suggestions.find(
+        (s) => s.originalSubnets.length === 4
+      );
+      expect(fullGroupSuggestion).toBeDefined();
+      expect(fullGroupSuggestion?.suggestedSupernet).toBe('192.168.1.0/24');
+    });
+
+    it('should handle mixed scenarios with multiple suggestions', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.128/25', '#00FF00');
+      const subnet3 = calculateSubnet('192.168.2.0/26', '#0000FF');
+      const subnet4 = calculateSubnet('192.168.2.64/26', '#FFFF00');
+      const suggestions = findSupernetOpportunities([
+        subnet1,
+        subnet2,
+        subnet3,
+        subnet4,
+      ]);
+
+      expect(suggestions.length).toBeGreaterThanOrEqual(2);
+
+      // /24 の提案
+      const suggestion1 = suggestions.find(
+        (s) => s.suggestedSupernet === '192.168.1.0/24'
+      );
+      expect(suggestion1).toBeDefined();
+
+      // /25 の提案
+      const suggestion2 = suggestions.find(
+        (s) => s.suggestedSupernet === '192.168.2.0/25'
+      );
+      expect(suggestion2).toBeDefined();
+    });
+
+    it('should calculate efficiency correctly for partial coverage', () => {
+      // 隣接していないが同じスーパーネット内の2つのサブネット
+      const subnet1 = calculateSubnet('192.168.1.0/26', '#FF0000'); // 64 addresses
+      const subnet2 = calculateSubnet('192.168.1.128/26', '#00FF00'); // 64 addresses
+      // 192.168.1.64/26 が抜けている状態
+
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      // この場合は隣接していないので提案されないはず
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should sort suggestions by efficiency', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.128/25', '#00FF00');
+      const subnet3 = calculateSubnet('192.168.2.0/26', '#0000FF');
+      const subnet4 = calculateSubnet('192.168.2.64/26', '#FFFF00');
+      const suggestions = findSupernetOpportunities([
+        subnet1,
+        subnet2,
+        subnet3,
+        subnet4,
+      ]);
+
+      // 効率性で降順ソートされているかチェック
+      for (let i = 1; i < suggestions.length; i++) {
+        expect(suggestions[i - 1].efficiency).toBeGreaterThanOrEqual(
+          suggestions[i].efficiency
+        );
+      }
+    });
+
+    it('should suggest supernet for adjacent /24 networks', () => {
+      const subnet1 = calculateSubnet('192.168.0.0/24', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.1.0/24', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('192.168.0.0/23');
+      expect(suggestions[0].originalSubnets).toHaveLength(2);
+      expect(suggestions[0].efficiency).toBe(100); // 完全に効率的
+      expect(suggestions[0].savedAddresses).toBe(0); // ギャップなし
+    });
+
+    it('should suggest supernet for adjacent /23 networks', () => {
+      const subnet1 = calculateSubnet('192.168.0.0/23', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.2.0/23', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('192.168.0.0/22');
+      expect(suggestions[0].originalSubnets).toHaveLength(2);
+      expect(suggestions[0].efficiency).toBe(100);
+    });
+
+    it('should not suggest supernet for non-adjacent /24 networks', () => {
+      const subnet1 = calculateSubnet('192.168.1.0/24', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.3.0/24', '#00FF00'); // 192.168.2.0/24 is missing
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toEqual([]);
+    });
+
+    it('should suggest supernet for 10.0.0.0/24 and 10.0.1.0/24', () => {
+      const subnet1 = calculateSubnet('10.0.0.0/24', '#FF0000');
+      const subnet2 = calculateSubnet('10.0.1.0/24', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('10.0.0.0/23');
+      expect(suggestions[0].efficiency).toBe(100);
+    });
+
+    it('should handle boundary cases correctly', () => {
+      const subnet1 = calculateSubnet('192.168.254.0/24', '#FF0000');
+      const subnet2 = calculateSubnet('192.168.255.0/24', '#00FF00');
+      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].suggestedSupernet).toBe('192.168.254.0/23');
+    });
+
+    // Note: 192.168.1.0/24 と 192.168.2.0/24 の間にはギャップがあります
+    // 192.168.1.255 の次は 192.168.2.0 なので実際には隣接しています
   });
 });

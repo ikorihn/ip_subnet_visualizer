@@ -205,6 +205,222 @@ export function calculateUnusedRanges(subnets: Subnet[]): UnusedRange[] {
   return unusedRanges;
 }
 
+export interface SupernetSuggestion {
+  originalSubnets: Subnet[];
+  suggestedSupernet: string;
+  savedAddresses: number;
+  efficiency: number;
+}
+
+export function findSupernetOpportunities(
+  subnets: Subnet[]
+): SupernetSuggestion[] {
+  const suggestions: SupernetSuggestion[] = [];
+
+  // すべてのサブネットペアをチェック
+  for (let i = 0; i < subnets.length; i++) {
+    for (let j = i + 1; j < subnets.length; j++) {
+      const subnet1 = subnets[i];
+      const subnet2 = subnets[j];
+
+      // 隣接しているかチェック
+      if (canBeCombined(subnet1, subnet2)) {
+        const supernet = calculateSupernet(subnet1, subnet2);
+        if (supernet) {
+          const originalSize =
+            subnet1.endValue -
+            subnet1.startValue +
+            1 +
+            (subnet2.endValue - subnet2.startValue + 1);
+          const supernetSize = Math.pow(2, 32 - supernet.prefixLength);
+          const savedAddresses = supernetSize - originalSize;
+          const efficiency = (originalSize / supernetSize) * 100;
+
+          suggestions.push({
+            originalSubnets: [subnet1, subnet2],
+            suggestedSupernet: supernet.cidr,
+            savedAddresses,
+            efficiency,
+          });
+        }
+      }
+    }
+  }
+
+  // より大きなグループのスーパーネット化も検討
+  const groupSuggestions = findGroupSupernetOpportunities(subnets);
+  suggestions.push(...groupSuggestions);
+
+  // 効率性でソート（効率が高い順）
+  return suggestions.sort((a, b) => b.efficiency - a.efficiency);
+}
+
+function canBeCombined(subnet1: Subnet, subnet2: Subnet): boolean {
+  const [, prefix1] = subnet1.cidr.split('/');
+  const [, prefix2] = subnet2.cidr.split('/');
+
+  // 同じプレフィックス長である必要がある
+  if (prefix1 !== prefix2) return false;
+
+  const prefixLength = Number.parseInt(prefix1, 10);
+
+  // プレフィックス長が1以下の場合は結合不可
+  if (prefixLength <= 1) return false;
+
+  const blockSize = Math.pow(2, 32 - prefixLength);
+
+  // 両方のサブネットが同じ上位ブロックに属しているかチェック
+  const supernetPrefixLength = prefixLength - 1;
+  const supernetMask = (0xffffffff << (32 - supernetPrefixLength)) >>> 0;
+
+  const network1 = (subnet1.startValue & supernetMask) >>> 0;
+  const network2 = (subnet2.startValue & supernetMask) >>> 0;
+
+  // 同じスーパーネットに属している場合
+  if (network1 === network2) {
+    const diff = Math.abs(subnet1.startValue - subnet2.startValue);
+    return diff === blockSize;
+  }
+
+  // 異なるスーパーネットでも隣接している場合はチェック
+  // サブネットが隣接している（一方の終了アドレス+1が他方の開始アドレス）
+  const isAdjacent =
+    subnet1.endValue + 1 === subnet2.startValue ||
+    subnet2.endValue + 1 === subnet1.startValue;
+
+  if (isAdjacent) {
+    // より大きなスーパーネットで境界が整列しているかチェック
+    const minStart = Math.min(subnet1.startValue, subnet2.startValue);
+    const maxEnd = Math.max(subnet1.endValue, subnet2.endValue);
+    const totalSize = maxEnd - minStart + 1;
+
+    // 結合後のサイズが2の累乗であり、境界が整列している場合のみ有効
+    if (isPowerOfTwo(totalSize) && (minStart & (totalSize - 1)) === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function calculateSupernet(
+  subnet1: Subnet,
+  subnet2: Subnet
+): { cidr: string; prefixLength: number } | null {
+  const [, prefix] = subnet1.cidr.split('/');
+  const prefixLength = Number.parseInt(prefix, 10);
+
+  if (prefixLength <= 1) return null; // これ以上集約できない
+
+  const minStart = Math.min(subnet1.startValue, subnet2.startValue);
+  const maxEnd = Math.max(subnet1.endValue, subnet2.endValue);
+  const totalSize = maxEnd - minStart + 1;
+
+  // 結合後のサイズから適切なプレフィックス長を計算
+  const supernetPrefixLength = 32 - Math.log2(totalSize);
+
+  if (supernetPrefixLength < 1) return null;
+
+  const supernetMask = (0xffffffff << (32 - supernetPrefixLength)) >>> 0;
+  const networkAddress = (minStart & supernetMask) >>> 0;
+  const cidr = `${numberToIp(networkAddress)}/${supernetPrefixLength}`;
+
+  return { cidr, prefixLength: supernetPrefixLength };
+}
+
+function findGroupSupernetOpportunities(
+  subnets: Subnet[]
+): SupernetSuggestion[] {
+  const suggestions: SupernetSuggestion[] = [];
+
+  // プレフィックス長でグループ化
+  const groupedByPrefix = new Map<number, Subnet[]>();
+  for (const subnet of subnets) {
+    const [, prefix] = subnet.cidr.split('/');
+    const prefixLength = Number.parseInt(prefix, 10);
+
+    if (!groupedByPrefix.has(prefixLength)) {
+      groupedByPrefix.set(prefixLength, []);
+    }
+    groupedByPrefix.get(prefixLength)!.push(subnet);
+  }
+
+  // 各プレフィックス長グループで連続するサブネットを探す
+  for (const [prefixLength, groupSubnets] of groupedByPrefix) {
+    if (groupSubnets.length < 3) continue; // 3つ以上のサブネットがある場合のみ
+
+    const sortedSubnets = groupSubnets.sort(
+      (a, b) => a.startValue - b.startValue
+    );
+
+    // 連続するサブネットのグループを見つける
+    let consecutiveGroup: Subnet[] = [sortedSubnets[0]];
+
+    for (let i = 1; i < sortedSubnets.length; i++) {
+      const prevSubnet = sortedSubnets[i - 1];
+      const currentSubnet = sortedSubnets[i];
+
+      if (currentSubnet.startValue === prevSubnet.endValue + 1) {
+        consecutiveGroup.push(currentSubnet);
+      } else {
+        // グループが途切れた場合、現在のグループをチェック
+        if (
+          consecutiveGroup.length >= 3 &&
+          isPowerOfTwo(consecutiveGroup.length)
+        ) {
+          const suggestion = createGroupSupernet(
+            consecutiveGroup,
+            prefixLength
+          );
+          if (suggestion) suggestions.push(suggestion);
+        }
+        consecutiveGroup = [currentSubnet];
+      }
+    }
+
+    // 最後のグループをチェック
+    if (consecutiveGroup.length >= 3 && isPowerOfTwo(consecutiveGroup.length)) {
+      const suggestion = createGroupSupernet(consecutiveGroup, prefixLength);
+      if (suggestion) suggestions.push(suggestion);
+    }
+  }
+
+  return suggestions;
+}
+
+function isPowerOfTwo(n: number): boolean {
+  return n > 0 && (n & (n - 1)) === 0;
+}
+
+function createGroupSupernet(
+  subnets: Subnet[],
+  originalPrefixLength: number
+): SupernetSuggestion | null {
+  if (subnets.length < 2) return null;
+
+  const supernetPrefixLength = originalPrefixLength - Math.log2(subnets.length);
+  if (supernetPrefixLength < 1) return null;
+
+  const supernetMask = (0xffffffff << (32 - supernetPrefixLength)) >>> 0;
+  const networkAddress = (subnets[0].startValue & supernetMask) >>> 0;
+  const cidr = `${numberToIp(networkAddress)}/${supernetPrefixLength}`;
+
+  const originalSize = subnets.reduce(
+    (sum, subnet) => sum + (subnet.endValue - subnet.startValue + 1),
+    0
+  );
+  const supernetSize = Math.pow(2, 32 - supernetPrefixLength);
+  const savedAddresses = supernetSize - originalSize;
+  const efficiency = (originalSize / supernetSize) * 100;
+
+  return {
+    originalSubnets: subnets,
+    suggestedSupernet: cidr,
+    savedAddresses,
+    efficiency,
+  };
+}
+
 export function generateColors(count: number): string[] {
   const colors = [
     '#3B82F6',

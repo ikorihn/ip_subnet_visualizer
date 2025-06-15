@@ -3,9 +3,17 @@ import { SubnetDetails } from './components/SubnetDetails';
 import { SubnetInput } from './components/SubnetInput';
 import { SubnetList } from './components/SubnetList';
 import { SubnetVisualizer } from './components/SubnetVisualizer';
+import { SupernetSuggestions } from './components/SupernetSuggestions';
 import { UnusedRanges } from './components/UnusedRanges';
 import type { Subnet } from './types/subnet';
-import { calculateUnusedRanges, detectConflicts } from './utils/ipCalculator';
+import {
+  calculateUnusedRanges,
+  detectConflicts,
+  findSupernetOpportunities,
+  calculateSubnet,
+  generateColors,
+  type SupernetSuggestion,
+} from './utils/ipCalculator';
 
 function App() {
   const [subnets, setSubnets] = useState<Subnet[]>([]);
@@ -17,6 +25,10 @@ function App() {
 
   const unusedRanges = useMemo(() => {
     return calculateUnusedRanges(subnets);
+  }, [subnets]);
+
+  const supernetSuggestions = useMemo(() => {
+    return findSupernetOpportunities(subnets);
   }, [subnets]);
 
   const handleAddSubnet = (subnet: Subnet) => {
@@ -32,6 +44,30 @@ function App() {
 
   const handleSelectSubnet = (subnet: Subnet | null) => {
     setSelectedSubnet(subnet);
+  };
+
+  const handleApplySupernetSuggestion = (suggestion: SupernetSuggestion) => {
+    // 元のサブネットを削除
+    const originalIds = new Set(
+      suggestion.originalSubnets.map((s: Subnet) => s.id)
+    );
+    const remainingSubnets = subnets.filter(
+      (subnet) => !originalIds.has(subnet.id)
+    );
+
+    // 新しいスーパーネットを追加
+    const colors = generateColors(remainingSubnets.length + 1);
+    const newSupernet = calculateSubnet(
+      suggestion.suggestedSupernet,
+      colors[remainingSubnets.length]
+    );
+
+    setSubnets([...remainingSubnets, newSupernet]);
+
+    // 選択されたサブネットが削除された場合はクリア
+    if (selectedSubnet && originalIds.has(selectedSubnet.id)) {
+      setSelectedSubnet(null);
+    }
   };
 
   return (
@@ -59,6 +95,10 @@ function App() {
             selectedSubnet={selectedSubnet}
           />
           <UnusedRanges unusedRanges={unusedRanges} />
+          <SupernetSuggestions
+            suggestions={supernetSuggestions}
+            onApplySuggestion={handleApplySupernetSuggestion}
+          />
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
