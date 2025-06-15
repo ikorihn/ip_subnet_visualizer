@@ -11,37 +11,51 @@ import {
 
 describe('IP Calculator', () => {
   describe('validateCIDR', () => {
-    it('should validate correct CIDR notation', () => {
-      const result = validateCIDR('192.168.1.0/24');
-      expect(result.isValid).toBe(true);
-    });
-
-    it('should reject invalid CIDR notation', () => {
-      const result = validateCIDR('invalid');
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-
-    it('should reject invalid prefix length', () => {
-      const result = validateCIDR('192.168.1.0/33');
-      expect(result.isValid).toBe(false);
-      expect(result.error).toContain('between 0 and 32');
+    it.each([
+      {
+        input: '192.168.1.0/24',
+        expected: { isValid: true },
+        description: 'should validate correct CIDR notation',
+      },
+      {
+        input: 'invalid',
+        expected: { isValid: false, hasError: true },
+        description: 'should reject invalid CIDR notation',
+      },
+      {
+        input: '192.168.1.0/33',
+        expected: { isValid: false, errorContains: 'between 0 and 32' },
+        description: 'should reject invalid prefix length',
+      },
+    ])('%s', ({ input, expected, description }) => {
+      const result = validateCIDR(input);
+      expect(result.isValid).toBe(expected.isValid);
+      if (expected.hasError) {
+        expect(result.error).toBeDefined();
+      }
+      if (expected.errorContains) {
+        expect(result.error).toContain(expected.errorContains);
+      }
     });
   });
 
   describe('ipToNumber', () => {
-    it('should convert IP to number correctly', () => {
-      expect(ipToNumber('192.168.1.1')).toBe(3232235777);
-      expect(ipToNumber('0.0.0.0')).toBe(0);
-      expect(ipToNumber('255.255.255.255')).toBe(4294967295);
+    it.each([
+      ['192.168.1.1', 3232235777],
+      ['0.0.0.0', 0],
+      ['255.255.255.255', 4294967295],
+    ])('should convert %s to %d', (ip, expected) => {
+      expect(ipToNumber(ip)).toBe(expected);
     });
   });
 
   describe('numberToIp', () => {
-    it('should convert number to IP correctly', () => {
-      expect(numberToIp(3232235777)).toBe('192.168.1.1');
-      expect(numberToIp(0)).toBe('0.0.0.0');
-      expect(numberToIp(4294967295)).toBe('255.255.255.255');
+    it.each([
+      [3232235777, '192.168.1.1'],
+      [0, '0.0.0.0'],
+      [4294967295, '255.255.255.255'],
+    ])('should convert %d to %s', (num, expected) => {
+      expect(numberToIp(num)).toBe(expected);
     });
   });
 
@@ -61,20 +75,30 @@ describe('IP Calculator', () => {
   });
 
   describe('calculateSubnetsFromRange', () => {
-    it('should calculate single /24 subnet for exact range', () => {
-      const startValue = ipToNumber('192.168.1.0');
-      const endValue = ipToNumber('192.168.1.255');
+    it.each([
+      {
+        start: '192.168.1.0',
+        end: '192.168.1.255',
+        expected: ['192.168.1.0/24'],
+        description: 'should calculate single /24 subnet for exact range',
+      },
+      {
+        start: '192.168.1.0',
+        end: '192.168.1.3',
+        expected: ['192.168.1.0/30'],
+        description: 'should calculate single /30 subnet for 4 addresses',
+      },
+      {
+        start: '192.168.1.100',
+        end: '192.168.1.100',
+        expected: ['192.168.1.100/32'],
+        description: 'should handle single address range',
+      },
+    ])('$description', ({ start, end, expected }) => {
+      const startValue = ipToNumber(start);
+      const endValue = ipToNumber(end);
       const subnets = calculateSubnetsFromRange(startValue, endValue);
-
-      expect(subnets).toEqual(['192.168.1.0/24']);
-    });
-
-    it('should calculate single /30 subnet for 4 addresses', () => {
-      const startValue = ipToNumber('192.168.1.0');
-      const endValue = ipToNumber('192.168.1.3');
-      const subnets = calculateSubnetsFromRange(startValue, endValue);
-
-      expect(subnets).toEqual(['192.168.1.0/30']);
+      expect(subnets).toEqual(expected);
     });
 
     it('should calculate multiple subnets for non-power-of-2 range', () => {
@@ -101,26 +125,31 @@ describe('IP Calculator', () => {
         true
       );
     });
-
-    it('should handle single address range', () => {
-      const startValue = ipToNumber('192.168.1.100');
-      const endValue = ipToNumber('192.168.1.100');
-      const subnets = calculateSubnetsFromRange(startValue, endValue);
-
-      expect(subnets).toEqual(['192.168.1.100/32']);
-    });
   });
 
   describe('calculateUnusedRanges', () => {
-    it('should return empty array for no subnets', () => {
-      const unusedRanges = calculateUnusedRanges([]);
-      expect(unusedRanges).toEqual([]);
-    });
-
-    it('should return empty array for single subnet', () => {
-      const subnet = calculateSubnet('192.168.1.0/24', '#FF0000');
-      const unusedRanges = calculateUnusedRanges([subnet]);
-      expect(unusedRanges).toEqual([]);
+    it.each([
+      {
+        subnets: [],
+        expected: [],
+        description: 'should return empty array for no subnets',
+      },
+      {
+        subnets: ['192.168.1.0/24'],
+        expected: [],
+        description: 'should return empty array for single subnet',
+      },
+      {
+        subnets: ['192.168.1.0/24', '192.168.2.0/24'],
+        expected: [],
+        description: 'should not include range for adjacent subnets',
+      },
+    ])('$description', ({ subnets, expected }) => {
+      const subnetObjects = subnets.map((cidr, index) =>
+        calculateSubnet(cidr, `#${(index * 100).toString(16).padStart(6, '0')}`)
+      );
+      const unusedRanges = calculateUnusedRanges(subnetObjects);
+      expect(unusedRanges).toEqual(expected);
     });
 
     it('should calculate unused range between two subnets', () => {
@@ -133,14 +162,6 @@ describe('IP Calculator', () => {
       expect(unusedRanges[0].endAddress).toBe('192.168.2.255');
       expect(unusedRanges[0].size).toBe(256);
       expect(unusedRanges[0].subnets).toEqual(['192.168.2.0/24']);
-    });
-
-    it('should not include range for adjacent subnets', () => {
-      const subnet1 = calculateSubnet('192.168.1.0/24', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.2.0/24', '#00FF00');
-      const unusedRanges = calculateUnusedRanges([subnet1, subnet2]);
-
-      expect(unusedRanges).toEqual([]);
     });
 
     it('should calculate multiple unused ranges', () => {
@@ -160,54 +181,58 @@ describe('IP Calculator', () => {
   });
 
   describe('findSupernetOpportunities', () => {
-    it('should return empty array for no subnets', () => {
-      const suggestions = findSupernetOpportunities([]);
-      expect(suggestions).toEqual([]);
+    it.each([
+      {
+        subnets: [],
+        expected: [],
+        description: 'should return empty array for no subnets',
+      },
+      {
+        subnets: ['192.168.1.0/24'],
+        expected: [],
+        description: 'should return empty array for single subnet',
+      },
+      {
+        subnets: ['192.168.1.0/25', '192.168.2.0/25'],
+        expected: [],
+        description: 'should not suggest supernet for non-adjacent subnets',
+      },
+      {
+        subnets: ['192.168.1.0/24', '192.168.2.0/25'],
+        expected: [],
+        description: 'should not suggest supernet for different prefix lengths',
+      },
+    ])('$description', ({ subnets, expected }) => {
+      const subnetObjects = subnets.map((cidr, index) =>
+        calculateSubnet(cidr, `#${(index * 100).toString(16).padStart(6, '0')}`)
+      );
+      const suggestions = findSupernetOpportunities(subnetObjects);
+      expect(suggestions).toEqual(expected);
     });
 
-    it('should return empty array for single subnet', () => {
-      const subnet = calculateSubnet('192.168.1.0/24', '#FF0000');
-      const suggestions = findSupernetOpportunities([subnet]);
-      expect(suggestions).toEqual([]);
-    });
-
-    it('should suggest supernet for two adjacent /25 subnets', () => {
-      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.1.128/25', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+    it.each([
+      {
+        subnet1: '192.168.1.0/25',
+        subnet2: '192.168.1.128/25',
+        expectedSupernet: '192.168.1.0/24',
+        description: 'should suggest supernet for two adjacent /25 subnets',
+      },
+      {
+        subnet1: '192.168.1.0/26',
+        subnet2: '192.168.1.64/26',
+        expectedSupernet: '192.168.1.0/25',
+        description: 'should suggest supernet for two adjacent /26 subnets',
+      },
+    ])('$description', ({ subnet1, subnet2, expectedSupernet }) => {
+      const subnetObj1 = calculateSubnet(subnet1, '#FF0000');
+      const subnetObj2 = calculateSubnet(subnet2, '#00FF00');
+      const suggestions = findSupernetOpportunities([subnetObj1, subnetObj2]);
 
       expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('192.168.1.0/24');
-      expect(suggestions[0].originalSubnets).toHaveLength(2);
-      expect(suggestions[0].efficiency).toBe(100); // 完全に効率的
-      expect(suggestions[0].savedAddresses).toBe(0); // ギャップなし
-    });
-
-    it('should suggest supernet for two adjacent /26 subnets', () => {
-      const subnet1 = calculateSubnet('192.168.1.0/26', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.1.64/26', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('192.168.1.0/25');
+      expect(suggestions[0].suggestedSupernet).toBe(expectedSupernet);
       expect(suggestions[0].originalSubnets).toHaveLength(2);
       expect(suggestions[0].efficiency).toBe(100);
-    });
-
-    it('should not suggest supernet for non-adjacent subnets', () => {
-      const subnet1 = calculateSubnet('192.168.1.0/25', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.2.0/25', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toEqual([]);
-    });
-
-    it('should not suggest supernet for different prefix lengths', () => {
-      const subnet1 = calculateSubnet('192.168.1.0/24', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.2.0/25', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toEqual([]);
+      expect(suggestions[0].savedAddresses).toBe(0);
     });
 
     it('should suggest supernet for four consecutive /26 subnets', () => {
@@ -292,29 +317,45 @@ describe('IP Calculator', () => {
       }
     });
 
-    it('should suggest supernet for adjacent /24 networks', () => {
-      const subnet1 = calculateSubnet('192.168.0.0/24', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.1.0/24', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
+    it.each([
+      {
+        subnet1: '192.168.0.0/24',
+        subnet2: '192.168.1.0/24',
+        expectedSupernet: '192.168.0.0/23',
+        description: 'should suggest supernet for adjacent /24 networks',
+      },
+      {
+        subnet1: '192.168.0.0/23',
+        subnet2: '192.168.2.0/23',
+        expectedSupernet: '192.168.0.0/22',
+        description: 'should suggest supernet for adjacent /23 networks',
+      },
+      {
+        subnet1: '10.0.0.0/24',
+        subnet2: '10.0.1.0/24',
+        expectedSupernet: '10.0.0.0/23',
+        description: 'should suggest supernet for 10.0.0.0/24 and 10.0.1.0/24',
+      },
+      {
+        subnet1: '192.168.254.0/24',
+        subnet2: '192.168.255.0/24',
+        expectedSupernet: '192.168.254.0/23',
+        description: 'should handle boundary cases correctly',
+      },
+    ])('$description', ({ subnet1, subnet2, expectedSupernet }) => {
+      const subnetObj1 = calculateSubnet(subnet1, '#FF0000');
+      const subnetObj2 = calculateSubnet(subnet2, '#00FF00');
+      const suggestions = findSupernetOpportunities([subnetObj1, subnetObj2]);
 
       expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('192.168.0.0/23');
-      expect(suggestions[0].originalSubnets).toHaveLength(2);
-      expect(suggestions[0].efficiency).toBe(100); // 完全に効率的
-      expect(suggestions[0].savedAddresses).toBe(0); // ギャップなし
-    });
-
-    it('should suggest supernet for adjacent /23 networks', () => {
-      const subnet1 = calculateSubnet('192.168.0.0/23', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.2.0/23', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('192.168.0.0/22');
+      expect(suggestions[0].suggestedSupernet).toBe(expectedSupernet);
       expect(suggestions[0].originalSubnets).toHaveLength(2);
       expect(suggestions[0].efficiency).toBe(100);
+      expect(suggestions[0].savedAddresses).toBe(0);
     });
 
+    // Note: 192.168.1.0/24 と 192.168.2.0/24 の間にはギャップがあります
+    // 192.168.1.255 の次は 192.168.2.0 なので実際には隣接しています
     it('should not suggest supernet for non-adjacent /24 networks', () => {
       const subnet1 = calculateSubnet('192.168.1.0/24', '#FF0000');
       const subnet2 = calculateSubnet('192.168.3.0/24', '#00FF00'); // 192.168.2.0/24 is missing
@@ -322,27 +363,5 @@ describe('IP Calculator', () => {
 
       expect(suggestions).toEqual([]);
     });
-
-    it('should suggest supernet for 10.0.0.0/24 and 10.0.1.0/24', () => {
-      const subnet1 = calculateSubnet('10.0.0.0/24', '#FF0000');
-      const subnet2 = calculateSubnet('10.0.1.0/24', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('10.0.0.0/23');
-      expect(suggestions[0].efficiency).toBe(100);
-    });
-
-    it('should handle boundary cases correctly', () => {
-      const subnet1 = calculateSubnet('192.168.254.0/24', '#FF0000');
-      const subnet2 = calculateSubnet('192.168.255.0/24', '#00FF00');
-      const suggestions = findSupernetOpportunities([subnet1, subnet2]);
-
-      expect(suggestions).toHaveLength(1);
-      expect(suggestions[0].suggestedSupernet).toBe('192.168.254.0/23');
-    });
-
-    // Note: 192.168.1.0/24 と 192.168.2.0/24 の間にはギャップがあります
-    // 192.168.1.255 の次は 192.168.2.0 なので実際には隣接しています
   });
 });
