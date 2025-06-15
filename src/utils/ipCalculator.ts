@@ -120,6 +120,91 @@ export function isIPInSubnet(ip: string, subnet: Subnet): boolean {
   return ipNum >= subnet.startValue && ipNum <= subnet.endValue;
 }
 
+export interface UnusedRange {
+  startAddress: string;
+  endAddress: string;
+  startValue: number;
+  endValue: number;
+  size: number;
+  subnets: string[];
+}
+
+export function calculateSubnetsFromRange(
+  startValue: number,
+  endValue: number
+): string[] {
+  const subnets: string[] = [];
+  let current = startValue;
+
+  while (current <= endValue) {
+    const remaining = endValue - current + 1;
+
+    // 最大のブロックサイズを見つける（2の累乗かつ、currentが境界に整列している）
+    let blockSize = 1;
+    let maxPossibleSize = 1;
+
+    // currentが境界に整列している最大のブロックサイズを見つける
+    for (let i = 0; i < 32; i++) {
+      const size = 1 << i;
+      if (size > remaining) break;
+      if ((current & (size - 1)) === 0) {
+        maxPossibleSize = size;
+      } else {
+        break;
+      }
+    }
+
+    // 残りのサイズに収まる最大のブロックサイズを使用
+    blockSize = maxPossibleSize;
+    while (blockSize > remaining) {
+      blockSize = blockSize >> 1;
+    }
+
+    // プレフィックス長を計算
+    const prefixLength = 32 - Math.log2(blockSize);
+
+    // サブネットCIDRを生成
+    const networkAddress = numberToIp(current);
+    subnets.push(`${networkAddress}/${prefixLength}`);
+
+    current += blockSize;
+  }
+
+  return subnets;
+}
+
+export function calculateUnusedRanges(subnets: Subnet[]): UnusedRange[] {
+  if (subnets.length === 0) return [];
+
+  const sortedSubnets = [...subnets].sort(
+    (a, b) => a.startValue - b.startValue
+  );
+  const unusedRanges: UnusedRange[] = [];
+
+  for (let i = 0; i < sortedSubnets.length - 1; i++) {
+    const currentSubnet = sortedSubnets[i];
+    const nextSubnet = sortedSubnets[i + 1];
+
+    if (currentSubnet.endValue + 1 < nextSubnet.startValue) {
+      const startValue = currentSubnet.endValue + 1;
+      const endValue = nextSubnet.startValue - 1;
+      const size = endValue - startValue + 1;
+      const subnets = calculateSubnetsFromRange(startValue, endValue);
+
+      unusedRanges.push({
+        startAddress: numberToIp(startValue),
+        endAddress: numberToIp(endValue),
+        startValue,
+        endValue,
+        size,
+        subnets,
+      });
+    }
+  }
+
+  return unusedRanges;
+}
+
 export function generateColors(count: number): string[] {
   const colors = [
     '#3B82F6',

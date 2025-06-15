@@ -3,8 +3,9 @@ import { SubnetDetails } from './components/SubnetDetails';
 import { SubnetInput } from './components/SubnetInput';
 import { SubnetList } from './components/SubnetList';
 import { SubnetVisualizer } from './components/SubnetVisualizer';
+import { UnusedRanges } from './components/UnusedRanges';
 import type { Subnet } from './types/subnet';
-import { detectConflicts } from './utils/ipCalculator';
+import { calculateUnusedRanges, detectConflicts } from './utils/ipCalculator';
 
 function App() {
   const [subnets, setSubnets] = useState<Subnet[]>([]);
@@ -12,6 +13,10 @@ function App() {
 
   const conflicts = useMemo(() => {
     return detectConflicts(subnets);
+  }, [subnets]);
+
+  const unusedRanges = useMemo(() => {
+    return calculateUnusedRanges(subnets);
   }, [subnets]);
 
   const handleAddSubnet = (subnet: Subnet) => {
@@ -53,6 +58,7 @@ function App() {
             onSelectSubnet={handleSelectSubnet}
             selectedSubnet={selectedSubnet}
           />
+          <UnusedRanges unusedRanges={unusedRanges} />
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

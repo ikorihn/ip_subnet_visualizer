@@ -118,8 +118,9 @@ export function SubnetVisualizer({
             ({ subnet, x, width, hasConflict, layer }) => (
               <div
                 key={subnet.id}
-                className={`absolute rounded cursor-pointer flex items-center justify-center transition-all border-2 border-transparent min-w-0.5 hover:shadow-lg hover:z-10 ${hasConflict ? 'border-red-500 !important shadow-red-200 shadow-md' : ''} ${selectedSubnet?.id === subnet.id ? 'selected' : ''
-                  }`}
+                className={`absolute rounded cursor-pointer flex items-center justify-center transition-all border-2 border-transparent min-w-0.5 hover:shadow-lg hover:z-10 ${hasConflict ? 'border-red-500 !important shadow-red-200 shadow-md' : ''} ${
+                  selectedSubnet?.id === subnet.id ? 'selected' : ''
+                }`}
                 style={{
                   left: `${x}%`,
                   width: `${Math.max(width, 0.5)}%`,
