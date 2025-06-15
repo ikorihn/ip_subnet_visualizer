@@ -4,7 +4,7 @@ import { SubnetInput } from './components/SubnetInput';
 import { SubnetList } from './components/SubnetList';
 import { SubnetVisualizer } from './components/SubnetVisualizer';
 import type { Subnet } from './types/subnet';
-import { IPCalculator } from './utils/ipCalculator';
+import { detectConflicts } from './utils/ipCalculator';
 import './App.css';
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
   const [selectedSubnet, setSelectedSubnet] = useState<Subnet | null>(null);
 
   const conflicts = useMemo(() => {
-    return IPCalculator.detectConflicts(subnets);
+    return detectConflicts(subnets);
   }, [subnets]);
 
   const handleAddSubnet = (subnet: Subnet) => {

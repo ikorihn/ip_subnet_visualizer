@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import type { Subnet } from '../types/subnet';
-import { IPCalculator } from '../utils/ipCalculator';
+import {
+  calculateSubnet,
+  generateColors,
+  validateCIDR,
+} from '../utils/ipCalculator';
 
 interface SubnetInputProps {
   onAddSubnet: (subnet: Subnet) => void;
@@ -35,21 +39,19 @@ export function SubnetInput({
 
     if (lines.length === 0) return;
 
-    const colors = IPCalculator.generateColors(
-      existingSubnets.length + lines.length
-    );
+    const colors = generateColors(existingSubnets.length + lines.length);
     const errors: string[] = [];
     const validSubnets: Subnet[] = [];
 
     lines.forEach((line, index) => {
-      const validationResult = IPCalculator.validateCIDR(line);
+      const validationResult = validateCIDR(line);
 
       if (!validationResult.isValid) {
         errors.push(`Line ${index + 1}: ${validationResult.error}`);
       } else {
         try {
           const colorIndex = existingSubnets.length + validSubnets.length;
-          const subnet = IPCalculator.calculateSubnet(line, colors[colorIndex]);
+          const subnet = calculateSubnet(line, colors[colorIndex]);
           validSubnets.push(subnet);
         } catch (error) {
           errors.push(

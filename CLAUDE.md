@@ -16,6 +16,9 @@ This project uses pnpm as package manager
 - `pnpm run lint:fix` - Run Biome linter and auto-fix issues
 - `pnpm run format` - Format code with Biome
 - `pnpm run check` - Run Biome check (lint + format)
+- `pnpm run test` - Run tests in watch mode
+- `pnpm run test:run` - Run tests once
+- `pnpm run test:ui` - Run tests with UI interface
 - `pnpm run preview` - Preview the production build locally
 
 ## Architecture
@@ -43,7 +46,8 @@ Claude Codeとのやり取りは日本語で行います。
 
 1. `pnpm run lint` - コードの静的解析とルール検証
 2. `pnpm run format` - コードフォーマット
-3. `pnpm run build` - TypeScriptエラーの確認とビルド検証
+3. `pnpm run test:run` - テストの実行
+4. `pnpm run build` - TypeScriptエラーの確認とビルド検証
 
 これらのコマンドがすべて成功することを確認してから作業完了とします。
 
