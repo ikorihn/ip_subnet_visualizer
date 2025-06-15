@@ -16,6 +16,69 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
     });
   };
 
+  const ipToBinary = (ip: string): string => {
+    return ip
+      .split('.')
+      .map((octet) => Number.parseInt(octet, 10).toString(2).padStart(8, '0'))
+      .join('');
+  };
+
+  const renderBinaryVisualization = (ip: string, prefixLength: number) => {
+    const binary = ipToBinary(ip);
+
+    const getBitColor = (bit: string, index: number) => {
+      if (index < prefixLength) {
+        // ネットワーク部分
+        if (bit === '1') {
+          return 'bg-blue-500 text-white'; // ネットワークビット1: 青
+        } else {
+          return 'bg-blue-100 text-blue-700'; // ネットワークビット0: 薄い青
+        }
+      } else {
+        // ホスト部分
+        if (bit === '1') {
+          return 'bg-gray-400 text-white'; // ホストビット1: グレー
+        } else {
+          return 'bg-gray-100 text-gray-600'; // ホストビット0: 薄いグレー
+        }
+      }
+    };
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500 min-w-[80px]">{ip}</span>
+          <div className="flex font-mono text-xs">
+            {binary.split('').map((bit, index) => (
+              <span
+                key={index}
+                className={`
+                  w-6 h-6 flex items-center justify-center rounded text-xs font-bold
+                  ${getBitColor(bit, index)}
+                  ${(index + 1) % 8 === 0 ? 'mr-1' : ''}
+                `}
+              >
+                {bit}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs">
+          <span className="min-w-[80px]"></span>
+          <div className="flex gap-2">
+            <span className="text-blue-600 font-medium">
+              Network ({prefixLength} bits)
+            </span>
+            <span className="text-gray-400">|</span>
+            <span className="text-gray-600 font-medium">
+              Host ({32 - prefixLength} bits)
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!subnet) {
     return (
       <div className="bg-white rounded-xl p-12 shadow-lg border border-gray-200 text-center text-gray-600">
@@ -164,6 +227,57 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
               </div>
               <div className="text-xs text-gray-600 font-medium">
                 Prefix Length
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-base font-semibold text-gray-700 mb-3 m-0">
+            Binary Visualization
+          </h4>
+          <div className="bg-gray-50 p-4 rounded-lg space-y-4 overflow-x-auto">
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-gray-600 mb-2 font-medium">Network Address</div>
+                {renderBinaryVisualization(subnet.networkAddress, Number.parseInt(subnet.cidr.split('/')[1]))}
+              </div>
+              
+              <div>
+                <div className="text-xs text-gray-600 mb-2 font-medium">Subnet Mask</div>
+                {renderBinaryVisualization(subnet.subnetMask, Number.parseInt(subnet.cidr.split('/')[1]))}
+              </div>
+              
+              <div>
+                <div className="text-xs text-gray-600 mb-2 font-medium">Broadcast Address</div>
+                {renderBinaryVisualization(subnet.broadcastAddress, Number.parseInt(subnet.cidr.split('/')[1]))}
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="space-y-1">
+                  <div className="font-medium text-blue-600 mb-1">Network bits:</div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <span className="text-gray-700">Network bit = 1</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center text-blue-700 text-xs font-bold">0</div>
+                    <span className="text-gray-700">Network bit = 0</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium text-gray-600 mb-1">Host bits:</div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-4 bg-gray-400 rounded flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <span className="text-gray-700">Host bit = 1</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-4 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-xs font-bold">0</div>
+                    <span className="text-gray-700">Host bit = 0</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

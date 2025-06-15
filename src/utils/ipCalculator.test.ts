@@ -27,7 +27,7 @@ describe('IP Calculator', () => {
         expected: { isValid: false, errorContains: 'between 0 and 32' },
         description: 'should reject invalid prefix length',
       },
-    ])('%s', ({ input, expected, description }) => {
+    ])('%s', ({ input, expected }) => {
       const result = validateCIDR(input);
       expect(result.isValid).toBe(expected.isValid);
       if (expected.hasError) {
