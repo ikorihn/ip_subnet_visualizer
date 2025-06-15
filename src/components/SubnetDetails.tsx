@@ -239,42 +239,69 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
           <div className="bg-gray-50 p-4 rounded-lg space-y-4 overflow-x-auto">
             <div className="space-y-3">
               <div>
-                <div className="text-xs text-gray-600 mb-2 font-medium">Network Address</div>
-                {renderBinaryVisualization(subnet.networkAddress, Number.parseInt(subnet.cidr.split('/')[1]))}
+                <div className="text-xs text-gray-600 mb-2 font-medium">
+                  Network Address
+                </div>
+                {renderBinaryVisualization(
+                  subnet.networkAddress,
+                  Number.parseInt(subnet.cidr.split('/')[1])
+                )}
               </div>
-              
+
               <div>
-                <div className="text-xs text-gray-600 mb-2 font-medium">Subnet Mask</div>
-                {renderBinaryVisualization(subnet.subnetMask, Number.parseInt(subnet.cidr.split('/')[1]))}
+                <div className="text-xs text-gray-600 mb-2 font-medium">
+                  Subnet Mask
+                </div>
+                {renderBinaryVisualization(
+                  subnet.subnetMask,
+                  Number.parseInt(subnet.cidr.split('/')[1])
+                )}
               </div>
-              
+
               <div>
-                <div className="text-xs text-gray-600 mb-2 font-medium">Broadcast Address</div>
-                {renderBinaryVisualization(subnet.broadcastAddress, Number.parseInt(subnet.cidr.split('/')[1]))}
+                <div className="text-xs text-gray-600 mb-2 font-medium">
+                  Broadcast Address
+                </div>
+                {renderBinaryVisualization(
+                  subnet.broadcastAddress,
+                  Number.parseInt(subnet.cidr.split('/')[1])
+                )}
               </div>
             </div>
-            
+
             <div className="border-t border-gray-200 pt-3">
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="space-y-1">
-                  <div className="font-medium text-blue-600 mb-1">Network bits:</div>
+                  <div className="font-medium text-blue-600 mb-1">
+                    Network bits:
+                  </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                      1
+                    </div>
                     <span className="text-gray-700">Network bit = 1</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center text-blue-700 text-xs font-bold">0</div>
+                    <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center text-blue-700 text-xs font-bold">
+                      0
+                    </div>
                     <span className="text-gray-700">Network bit = 0</span>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <div className="font-medium text-gray-600 mb-1">Host bits:</div>
+                  <div className="font-medium text-gray-600 mb-1">
+                    Host bits:
+                  </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 bg-gray-400 rounded flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <div className="w-4 h-4 bg-gray-400 rounded flex items-center justify-center text-white text-xs font-bold">
+                      1
+                    </div>
                     <span className="text-gray-700">Host bit = 1</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-4 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-xs font-bold">0</div>
+                    <div className="w-4 h-4 bg-gray-100 rounded flex items-center justify-center text-gray-600 text-xs font-bold">
+                      0
+                    </div>
                     <span className="text-gray-700">Host bit = 0</span>
                   </div>
                 </div>

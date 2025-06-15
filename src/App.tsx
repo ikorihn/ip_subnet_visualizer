@@ -7,12 +7,12 @@ import { SupernetSuggestions } from './components/SupernetSuggestions';
 import { UnusedRanges } from './components/UnusedRanges';
 import type { Subnet } from './types/subnet';
 import {
+  type SupernetSuggestion,
+  calculateSubnet,
   calculateUnusedRanges,
   detectConflicts,
   findSupernetOpportunities,
-  calculateSubnet,
   generateColors,
-  type SupernetSuggestion,
 } from './utils/ipCalculator';
 
 function App() {
