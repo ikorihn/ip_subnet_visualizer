@@ -8,13 +8,6 @@ interface SubnetVisualizerProps {
   selectedSubnet: Subnet | null;
 }
 
-interface VisualizationData {
-  subnet: Subnet;
-  x: number;
-  width: number;
-  hasConflict: boolean;
-}
-
 export function SubnetVisualizer({
   subnets,
   conflicts,

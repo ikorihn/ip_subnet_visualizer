@@ -37,6 +37,16 @@ This project uses pnpm as package manager
 Claude Codeとのやり取りは日本語で行います。
 アプリケーションのUIには英語を使用してください。
 
+## Development Workflow
+
+コード変更後は必ず以下のコマンドを実行してください：
+
+1. `pnpm run lint` - コードの静的解析とルール検証
+2. `pnpm run format` - コードフォーマット
+3. `pnpm run build` - TypeScriptエラーの確認とビルド検証
+
+これらのコマンドがすべて成功することを確認してから作業完了とします。
+
 ## Commit Rules
 
 - NEVER ever mention a co-authored-by or similar aspects. In particular, never mention the tool used to create the commit message or PR.

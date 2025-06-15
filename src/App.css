@@ -94,6 +94,28 @@
   border-color: #dc3545;
 }
 
+.bulk-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  transition: border-color 0.2s;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.bulk-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.bulk-input.error {
+  border-color: #dc3545;
+}
+
 .add-button {
   padding: 0.75rem 1.5rem;
   background: #667eea;
@@ -114,6 +136,32 @@
   color: #dc3545;
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+.bulk-error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.bulk-error-summary {
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 0.5rem;
+}
+
+.bulk-error-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.error-item {
+  font-size: 0.875rem;
+  color: #7f1d1d;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
 }
 
 .input-examples {
