@@ -5,7 +5,6 @@ import { SubnetList } from './components/SubnetList';
 import { SubnetVisualizer } from './components/SubnetVisualizer';
 import type { Subnet } from './types/subnet';
 import { detectConflicts } from './utils/ipCalculator';
-import './App.css';
 
 function App() {
   const [subnets, setSubnets] = useState<Subnet[]>([]);
@@ -31,21 +30,23 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>IP Subnet Visualizer</h1>
-        <p>Enter subnets in CIDR notation to visualize IP address space</p>
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 text-center shadow-lg">
+        <h1 className="text-4xl font-bold mb-2">IP Subnet Visualizer</h1>
+        <p className="text-lg opacity-90">
+          Enter subnets in CIDR notation to visualize IP address space
+        </p>
       </header>
 
-      <main className="app-main">
-        <section className="input-section">
+      <main className="flex-1 max-w-7xl mx-auto p-8 w-full">
+        <section className="mb-8">
           <SubnetInput
             onAddSubnet={handleAddSubnet}
             existingSubnets={subnets}
           />
         </section>
 
-        <section className="visualization-section">
+        <section className="mb-8">
           <SubnetVisualizer
             subnets={subnets}
             conflicts={conflicts}
@@ -54,8 +55,8 @@ function App() {
           />
         </section>
 
-        <div className="details-section">
-          <div className="subnet-list-container">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div>
             <SubnetList
               subnets={subnets}
               onRemoveSubnet={handleRemoveSubnet}
@@ -64,7 +65,7 @@ function App() {
             />
           </div>
 
-          <div className="subnet-details-container">
+          <div>
             <SubnetDetails subnet={selectedSubnet} />
           </div>
         </div>

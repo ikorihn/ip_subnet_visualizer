@@ -19,18 +19,20 @@ export function SubnetList({
 
   if (subnets.length === 0) {
     return (
-      <div className="subnet-list empty">
+      <div className="bg-white rounded-xl p-12 shadow-lg border border-gray-200 text-center text-gray-600">
         <p>No subnets registered</p>
       </div>
     );
   }
 
   return (
-    <div className="subnet-list">
-      <div className="list-header">
-        <h3>Subnet List ({subnets.length})</h3>
+    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 h-fit">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl text-gray-800 m-0">
+          Subnet List ({subnets.length})
+        </h3>
         <button
-          className="clear-all-button"
+          className="bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 transition-colors"
           onClick={() => {
             if (confirm('Delete all subnets?')) {
               subnets.forEach((subnet) => onRemoveSubnet(subnet.id));
@@ -41,30 +43,36 @@ export function SubnetList({
         </button>
       </div>
 
-      <div className="subnet-items">
+      <div className="flex flex-col gap-3">
         {subnets.map((subnet) => (
           <div
             key={subnet.id}
-            className={`subnet-item ${
-              selectedSubnet?.id === subnet.id ? 'selected' : ''
+            className={`border border-gray-200 rounded-lg p-3.5 cursor-pointer transition-all hover:border-blue-500 hover:shadow-md ${
+              selectedSubnet?.id === subnet.id
+                ? 'border-emerald-500 bg-emerald-50'
+                : ''
             }`}
             onClick={() =>
               onSelectSubnet(selectedSubnet?.id === subnet.id ? null : subnet)
             }
           >
-            <div className="subnet-header">
-              <div className="subnet-info">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-3">
                 <div
-                  className="subnet-color"
+                  className="w-4 h-4 rounded flex-shrink-0"
                   style={{ backgroundColor: subnet.color }}
                 ></div>
-                <div className="subnet-label">
-                  <span className="cidr">{subnet.cidr}</span>
-                  <span className="network">{subnet.networkAddress}</span>
+                <div>
+                  <span className="font-semibold text-gray-800 font-mono text-sm">
+                    {subnet.cidr}
+                  </span>
+                  <span className="block text-xs text-gray-600 mt-0.5 font-mono">
+                    {subnet.networkAddress}
+                  </span>
                 </div>
               </div>
               <button
-                className="remove-button"
+                className="text-red-500 hover:bg-red-100 p-1 rounded transition-colors text-base"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (confirm(`Delete ${subnet.cidr}?`)) {
@@ -77,11 +85,11 @@ export function SubnetList({
               </button>
             </div>
 
-            <div className="subnet-summary">
-              <span className="hosts-count">
+            <div className="flex justify-between text-xs text-gray-600">
+              <span className="font-medium">
                 {formatNumber(subnet.availableHosts)} hosts
               </span>
-              <span className="address-range">
+              <span className="font-mono">
                 {subnet.firstHost} - {subnet.lastHost}
               </span>
             </div>

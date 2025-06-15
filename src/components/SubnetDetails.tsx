@@ -18,8 +18,8 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
 
   if (!subnet) {
     return (
-      <div className="subnet-details empty">
-        <div className="empty-message">
+      <div className="bg-white rounded-xl p-12 shadow-lg border border-gray-200 text-center text-gray-600">
+        <div>
           <p>Select a subnet to view detailed information</p>
         </div>
       </div>
@@ -29,27 +29,31 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
   const totalAddresses = subnet.endValue - subnet.startValue + 1;
 
   return (
-    <div className="subnet-details">
-      <div className="details-header">
-        <div className="subnet-title">
+    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 h-fit">
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
           <div
-            className="subnet-color"
+            className="w-4 h-4 rounded"
             style={{ backgroundColor: subnet.color }}
           ></div>
-          <h3>{subnet.cidr}</h3>
+          <h3 className="text-xl text-gray-800 font-mono m-0">{subnet.cidr}</h3>
         </div>
       </div>
 
-      <div className="details-content">
-        <div className="info-section">
-          <h4>Basic Information</h4>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Network Address</label>
-              <div className="info-value">
+      <div className="flex flex-col gap-6">
+        <div>
+          <h4 className="text-base font-semibold text-gray-700 mb-3 m-0">
+            Basic Information
+          </h4>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+              <label className="text-sm text-gray-600 font-medium">
+                Network Address
+              </label>
+              <div className="flex items-center gap-2 font-mono text-sm text-gray-800">
                 <span>{subnet.networkAddress}</span>
                 <button
-                  className="copy-button"
+                  className="hover:bg-blue-100 p-1 rounded transition-colors text-xs"
                   onClick={() => copyToClipboard(subnet.networkAddress)}
                   title="Copy"
                 >
@@ -58,12 +62,14 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
               </div>
             </div>
 
-            <div className="info-item">
-              <label>Broadcast Address</label>
-              <div className="info-value">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+              <label className="text-sm text-gray-600 font-medium">
+                Broadcast Address
+              </label>
+              <div className="flex items-center gap-2 font-mono text-sm text-gray-800">
                 <span>{subnet.broadcastAddress}</span>
                 <button
-                  className="copy-button"
+                  className="hover:bg-blue-100 p-1 rounded transition-colors text-xs"
                   onClick={() => copyToClipboard(subnet.broadcastAddress)}
                   title="Copy"
                 >
@@ -72,12 +78,14 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
               </div>
             </div>
 
-            <div className="info-item">
-              <label>Subnet Mask</label>
-              <div className="info-value">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+              <label className="text-sm text-gray-600 font-medium">
+                Subnet Mask
+              </label>
+              <div className="flex items-center gap-2 font-mono text-sm text-gray-800">
                 <span>{subnet.subnetMask}</span>
                 <button
-                  className="copy-button"
+                  className="hover:bg-blue-100 p-1 rounded transition-colors text-xs"
                   onClick={() => copyToClipboard(subnet.subnetMask)}
                   title="Copy"
                 >
@@ -89,14 +97,18 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
         </div>
 
         <div className="info-section">
-          <h4>Host Range</h4>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>First Host</label>
-              <div className="info-value">
+          <h4 className="text-base font-semibold text-gray-700 mb-3 m-0">
+            Host Range
+          </h4>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+              <label className="text-sm text-gray-600 font-medium">
+                First Host
+              </label>
+              <div className="flex items-center gap-2 font-mono text-sm text-gray-800">
                 <span>{subnet.firstHost}</span>
                 <button
-                  className="copy-button"
+                  className="hover:bg-blue-100 p-1 rounded transition-colors text-xs"
                   onClick={() => copyToClipboard(subnet.firstHost)}
                   title="Copy"
                 >
@@ -105,12 +117,14 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
               </div>
             </div>
 
-            <div className="info-item">
-              <label>Last Host</label>
-              <div className="info-value">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+              <label className="text-sm text-gray-600 font-medium">
+                Last Host
+              </label>
+              <div className="flex items-center gap-2 font-mono text-sm text-gray-800">
                 <span>{subnet.lastHost}</span>
                 <button
-                  className="copy-button"
+                  className="hover:bg-blue-100 p-1 rounded transition-colors text-xs"
                   onClick={() => copyToClipboard(subnet.lastHost)}
                   title="Copy"
                 >
@@ -121,46 +135,60 @@ export function SubnetDetails({ subnet }: SubnetDetailsProps) {
           </div>
         </div>
 
-        <div className="info-section">
-          <h4>Statistics</h4>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-value">{formatNumber(totalAddresses)}</div>
-              <div className="stat-label">Total Addresses</div>
+        <div>
+          <h4 className="text-base font-semibold text-gray-700 mb-3 m-0">
+            Statistics
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-800 mb-1">
+                {formatNumber(totalAddresses)}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">
+                Total Addresses
+              </div>
             </div>
 
-            <div className="stat-item">
-              <div className="stat-value">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-800 mb-1">
                 {formatNumber(subnet.availableHosts)}
               </div>
-              <div className="stat-label">Available Hosts</div>
+              <div className="text-xs text-gray-600 font-medium">
+                Available Hosts
+              </div>
             </div>
 
-            <div className="stat-item">
-              <div className="stat-value">/{subnet.cidr.split('/')[1]}</div>
-              <div className="stat-label">Prefix Length</div>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-800 mb-1">
+                /{subnet.cidr.split('/')[1]}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">
+                Prefix Length
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="info-section">
-          <h4>Address Calculation</h4>
-          <div className="calculation-info">
-            <div className="calculation-item">
-              <span className="calculation-label">Network bits:</span>
-              <span className="calculation-value">
+        <div>
+          <h4 className="text-base font-semibold text-gray-700 mb-3 m-0">
+            Address Calculation
+          </h4>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between py-1.5 text-sm">
+              <span className="text-gray-600">Network bits:</span>
+              <span className="font-mono text-gray-800 font-medium">
                 {subnet.cidr.split('/')[1]} bits
               </span>
             </div>
-            <div className="calculation-item">
-              <span className="calculation-label">Host bits:</span>
-              <span className="calculation-value">
+            <div className="flex justify-between py-1.5 text-sm">
+              <span className="text-gray-600">Host bits:</span>
+              <span className="font-mono text-gray-800 font-medium">
                 {32 - Number.parseInt(subnet.cidr.split('/')[1])} bits
               </span>
             </div>
-            <div className="calculation-item">
-              <span className="calculation-label">Numeric range:</span>
-              <span className="calculation-value">
+            <div className="flex justify-between py-1.5 text-sm">
+              <span className="text-gray-600">Numeric range:</span>
+              <span className="font-mono text-gray-800 font-medium">
                 {formatNumber(subnet.startValue)} -{' '}
                 {formatNumber(subnet.endValue)}
               </span>
