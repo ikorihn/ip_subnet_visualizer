@@ -33,7 +33,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>IP Subnet Visual Calculator</h1>
+        <h1>IP Subnet Visualizer</h1>
         <p>Enter subnets in CIDR notation to visualize IP address space</p>
       </header>
 
@@ -69,10 +69,6 @@ function App() {
           </div>
         </div>
       </main>
-
-      <footer className="app-footer">
-        <p>© 2024 IP Subnet Visual Calculator</p>
-      </footer>
     </div>
   );
 }
