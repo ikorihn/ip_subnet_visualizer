@@ -7,7 +7,7 @@ export class IPCalculator {
     if (!cidrRegex.test(cidr)) {
       return {
         isValid: false,
-        error: 'CIDR記法が正しくありません（例：192.168.1.0/24）',
+        error: 'Invalid CIDR notation (e.g., 192.168.1.0/24)',
       };
     }
 
@@ -17,7 +17,7 @@ export class IPCalculator {
     if (prefix < 0 || prefix > 32) {
       return {
         isValid: false,
-        error: 'プレフィックス長は0-32の範囲で入力してください',
+        error: 'Prefix length must be between 0 and 32',
       };
     }
 
@@ -26,7 +26,7 @@ export class IPCalculator {
     if (octets.some((octet) => octet < 0 || octet > 255)) {
       return {
         isValid: false,
-        error: 'IPアドレスの各オクテットは0-255の範囲で入力してください',
+        error: 'Each octet must be between 0 and 255',
       };
     }
 

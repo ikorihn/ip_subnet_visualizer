@@ -53,7 +53,7 @@ export function SubnetVisualizer({
     return (
       <div className="subnet-visualizer empty">
         <div className="empty-message">
-          <p>サブネットを追加すると、ここに可視化表示されます</p>
+          <p>Add subnets to see visualization here</p>
         </div>
       </div>
     );
@@ -62,19 +62,19 @@ export function SubnetVisualizer({
   return (
     <div className="subnet-visualizer">
       <div className="visualizer-header">
-        <h3>サブネット可視化</h3>
+        <h3>Subnet Visualization</h3>
         <div className="legend">
           <div className="legend-item">
             <div className="legend-color normal"></div>
-            <span>通常</span>
+            <span>Normal</span>
           </div>
           <div className="legend-item">
             <div className="legend-color conflict"></div>
-            <span>競合</span>
+            <span>Conflict</span>
           </div>
           <div className="legend-item">
             <div className="legend-color selected"></div>
-            <span>選択中</span>
+            <span>Selected</span>
           </div>
         </div>
       </div>
@@ -131,12 +131,12 @@ export function SubnetVisualizer({
 
       {conflicts.length > 0 && (
         <div className="conflicts-alert">
-          <div className="alert-header">⚠️ サブネット競合が検出されました</div>
+          <div className="alert-header">⚠️ Subnet conflicts detected</div>
           <div className="conflicts-list">
             {conflicts.map((conflict, index) => (
               <div key={index} className="conflict-item">
                 <span className="conflict-type">
-                  {conflict.type === 'identical' ? '完全一致' : '重複'}:
+                  {conflict.type === 'identical' ? 'Identical' : 'Overlap'}:
                 </span>
                 <span className="conflict-subnets">
                   {conflict.subnet1.cidr} ↔ {conflict.subnet2.cidr}

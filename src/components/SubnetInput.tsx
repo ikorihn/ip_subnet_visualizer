@@ -39,7 +39,7 @@ export function SubnetInput({
     } catch (error) {
       setValidation({
         isValid: false,
-        error: 'サブネット計算中にエラーが発生しました',
+        error: 'Error occurred during subnet calculation',
       });
     }
   };
@@ -59,11 +59,11 @@ export function SubnetInput({
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="CIDR記法で入力 (例: 192.168.1.0/24)"
+            placeholder="Enter CIDR notation (e.g., 192.168.1.0/24)"
             className={`cidr-input ${!validation.isValid ? 'error' : ''}`}
           />
           <button type="submit" className="add-button">
-            追加
+            Add
           </button>
         </div>
         {!validation.isValid && (
@@ -72,7 +72,7 @@ export function SubnetInput({
       </form>
 
       <div className="input-examples">
-        <span className="examples-label">例:</span>
+        <span className="examples-label">Examples:</span>
         <button
           type="button"
           className="example-button"

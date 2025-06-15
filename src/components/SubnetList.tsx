@@ -20,7 +20,7 @@ export function SubnetList({
   if (subnets.length === 0) {
     return (
       <div className="subnet-list empty">
-        <p>登録されたサブネットはありません</p>
+        <p>No subnets registered</p>
       </div>
     );
   }
@@ -28,16 +28,16 @@ export function SubnetList({
   return (
     <div className="subnet-list">
       <div className="list-header">
-        <h3>サブネット一覧 ({subnets.length})</h3>
+        <h3>Subnet List ({subnets.length})</h3>
         <button
           className="clear-all-button"
           onClick={() => {
-            if (confirm('すべてのサブネットを削除しますか？')) {
+            if (confirm('Delete all subnets?')) {
               subnets.forEach((subnet) => onRemoveSubnet(subnet.id));
             }
           }}
         >
-          すべて削除
+          Clear All
         </button>
       </div>
 
@@ -67,11 +67,11 @@ export function SubnetList({
                 className="remove-button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm(`${subnet.cidr} を削除しますか？`)) {
+                  if (confirm(`Delete ${subnet.cidr}?`)) {
                     onRemoveSubnet(subnet.id);
                   }
                 }}
-                title="削除"
+                title="Delete"
               >
                 ✕
               </button>

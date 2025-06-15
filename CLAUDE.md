@@ -34,5 +34,9 @@ This project uses pnpm as package manager
 
 ## Language
 
-やり取りは日本語で行います。
+Claude Codeとのやり取りは日本語で行います。
+アプリケーションのUIには英語を使用してください。
 
+## Commit Rules
+
+- NEVER ever mention a co-authored-by or similar aspects. In particular, never mention the tool used to create the commit message or PR.
