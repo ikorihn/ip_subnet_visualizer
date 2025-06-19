@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { GitHubIcon } from './components/GitHubIcon';
 import { SubnetDetails } from './components/SubnetDetails';
 import { SubnetInput } from './components/SubnetInput';
 import { SubnetList } from './components/SubnetList';
@@ -72,7 +73,16 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 text-center shadow-lg">
+      <header className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 text-center shadow-lg relative">
+        <a
+          href="https://github.com/ikorihn/ip_subnet_visualizer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-6 right-6 text-white hover:text-gray-200 transition-colors"
+          aria-label="View source on GitHub"
+        >
+          <GitHubIcon />
+        </a>
         <h1 className="text-4xl font-bold mb-2">IP Subnet Visualizer</h1>
         <p className="text-lg opacity-90">
           Enter subnets in CIDR notation to visualize IP address space
