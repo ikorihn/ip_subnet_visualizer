@@ -2,6 +2,8 @@
 
 A web-based tool for visualizing and managing IP subnet ranges. This tool helps network administrators and engineers efficiently design and understand subnet configurations through interactive visual representations.
 
+![image](sample.png)
+
 ## Features
 
 ### Core Functionality
